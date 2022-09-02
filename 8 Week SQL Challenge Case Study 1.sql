@@ -182,6 +182,19 @@ SELECT
 	SUM(points_earned) as total_points_earned
 FROM points 
 GROUP BY customer_id;
+
+
+           **OTHER WAY**
+	    
+SELECT
+	s.customer_id, 
+    SUM(CASE WHEN product_name = 'sushi' THEN price*10*2 
+    ELSE price*10 END) as points_earned 
+FROM sales s
+JOIN menu m
+	ON s.product_id = m.product_id
+GROUP BY 1
+ORDER BY 1;    	    
  					--------------------------------------------------------------------------------------
 
 
