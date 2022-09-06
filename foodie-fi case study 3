@@ -147,3 +147,44 @@ GROUP BY 1
 Functions Used: LEAD, COUN, DISTINCT and ROUND
 
 Analysis: More than 80% customers are on paid plans( basic and monthly) and only 3.7% are on pro annual plan. Thus, more strategy need to applied to direct or attract customer who are willing to pay more.
+
+
+### 8. How many customers have upgraded to an annual plan in 2020?
+
+````sql
+SELECT 
+  COUNT(DISTINCT customer_id) AS unique_customer
+FROM subscriptions
+WHERE plan_id = 3
+  AND start_date <= '2020-12-31'
+````
+
+**Analysis- 196 customers upgraded to an annual plan in 2020.
+
+### 9. How many days on average does it take for a customer to an annual plan from the day they join Foodie-Fi?
+
+````sql
+-- Filter results to customers at trial plan = 0
+WITH trial_plan AS 
+(SELECT 
+  customer_id, 
+  start_date AS trial_date
+FROM subscriptions
+WHERE plan_id = 0
+),
+-- Filter results to customers at pro annual plan = 3
+annual_plan AS
+(SELECT 
+  customer_id, 
+  start_date AS annual_date
+FROM subscriptions
+WHERE plan_id = 3
+)
+
+SELECT 
+  ROUND(AVG(annual_date - trial_date),0) AS avg_days_to_upgrade
+FROM trial_plan tp
+JOIN annual_plan ap
+  ON tp.customer_id = ap.customer_id;
+  
+ Analysis: - 196 customers upgraded to an annual plan in 2020. 
