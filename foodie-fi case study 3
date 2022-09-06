@@ -1,0 +1,24 @@
+-- Case 2:  What is the monthly distribution of trial plan start_date values for our dataset - use the start of the month as the group by value?
+
+We have to find the count of customers by month(group by) for trail plan = 'trail'
+Firstly, count the customers based on trail plan, 
+then extract the month name and number and group by months.
+
+SELECT
+	`#ffffff`COUNT(s.customer_id) as Total_customers, 
+    DATE_PART('MONTH', s.start_date) as months,
+    TO_CHAR(s.start_date, 'MONTH')
+FROM subscriptions s
+JOIN plans p
+	ON s.plan_id = p.plan_id
+    WHERE s.plan_id = 0
+ GROUP BY    DATE_PART('MONTH', s.start_date),
+     TO_CHAR(s.start_date, 'MONTH')
+ ORDER BY months;
+ 
+ Functions used:
+ DATE_PART to extract numerical value from the start date column
+ **DATE_PART( 'field value', date_time column ) function is used to query for subfields from a date or time value
+ 
+ TO_CHAR to cast numerical value to characters TO_CHAR(column/expression, numeric/date value)
+ **TO_CHAR function is used to typecast a numeric or date input to character type
