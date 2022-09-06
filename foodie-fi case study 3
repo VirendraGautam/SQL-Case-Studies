@@ -5,7 +5,7 @@ Firstly, count the customers based on trail plan,
 then extract the month name and number and group by months.
 
 SELECT
-	`#ffffff`COUNT(s.customer_id) as Total_customers, 
+    COUNT(s.customer_id) as Total_customers, 
     DATE_PART('MONTH', s.start_date) as months,
     TO_CHAR(s.start_date, 'MONTH')
 FROM subscriptions s
