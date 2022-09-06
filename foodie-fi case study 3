@@ -1,9 +1,30 @@
--- Case 2:  What is the monthly distribution of trial plan start_date values for our dataset - use the start of the month as the group by value?
+# 🥑 Case Study #3 - Foodie-Fi
+
+## 🎞 Solution - B. Data Analysis Questions
+By Virendra Gautam.
+
+
+### Case 1: How many customers has Foodie-Fi ever had?
+
+````sql
+SELECT 
+ 	COUNT( `DISTINCT` customer_id) as total_customer
+FROM subscriptions 
+````
+
+Function used:
+  COUNT function to count the customers and to count the unique customer we need  to use DISTINCT
+
+
+Analysis: Foodie-Fi has 1,000 unique customers. 
+                                          ----------------------------------------------------------------------------------------
+
+ ###Case 2:  What is the monthly distribution of trial plan start_date values for our dataset - use the start of the month as the group by value?
 
 We have to find the count of customers by month(group by) for trail plan = 'trail'
 Firstly, count the customers based on trail plan, 
 then extract the month name and number and group by months.
-
+--------------------
 SELECT
     COUNT(s.customer_id) as Total_customers, 
     DATE_PART('MONTH', s.start_date) as months,
@@ -15,10 +36,114 @@ JOIN plans p
  GROUP BY    DATE_PART('MONTH', s.start_date),
      TO_CHAR(s.start_date, 'MONTH')
  ORDER BY months;
- 
+ --------------------
  Functions used:
  DATE_PART to extract numerical value from the start date column
  **DATE_PART( 'field value', date_time column ) function is used to query for subfields from a date or time value
  
  TO_CHAR to cast numerical value to characters TO_CHAR(column/expression, numeric/date value)
  **TO_CHAR function is used to typecast a numeric or date input to character type
+
+
+Analysis: March has the highest number of trial plans, whereas February has the lowest number of trial plans.
+				----------------------------------------------------------------------------------------
+				
+        
+Case 3: What plan start_date values occur after the year 2020 for our dataset? Show the breakdown by count of events for each plan_name.
+
+We need to count the customer for each plan name after the year 2020
+
+SELECT
+	COUNT(s.customer_id) as Total_Customer,
+    p.plan_name
+FROM subscriptions s
+JOIN plans p
+	ON s.plan_id = p.plan_id
+WHERE s.start_date > '2020-12-31'
+GROUP BY 2;
+
+
+Functions Used: 
+COUNT counts all the rows except rows with null values.
+
+Analysis: There are 0 trail plan customers
+            Interpretation- that their are no new customers in 2021 taking trail period or they may have directly opted for basic and above plans.
+            
+                                       ---------------------------------------------------------------------------
+                                       
+Case 4:    What is the customer count and percentage of customers who have churned rounded to 1 decimal place?
+
+
+We need to count customers,
+calculated percentage who have chruned means who have left the service,
+round percentage to 1 decimal place 
+
+SELECT 
+	(SELECT
+	COUNT( DISTINCT customer_id) as churned_customers
+FROM subscriptions
+WHERE plan_id = 4) as chruned_customer ,
+ROUND((100.0*(SELECT
+	COUNT( DISTINCT customer_id) 
+FROM subscriptions
+WHERE plan_id = 4)/ COUNT( DISTINCT customer_id)),1) as percentage_of_chruned_customers
+FROM subscriptions;
+
+Function used:
+DISTINCT to calculate the uniques values in a column
+ROUND(value, no of decimal points) to round the numeric value to the no of counts.
+
+
+Analysis: There are 307 customers who have churned, which is 30.7% of Foodie-Fi customer base.
+                                      -------------------------------------------------------------------------------------------------
+                                      
+                                      
+Case 5: How many customers have churned straight after their initial free trial - what percentage is this rounded to the nearest whole number?
+
+We need to find the count of customers who churned immediately after  the free trail and their percentage 
+
+
+
+WITH plan_steps AS (SELECT customer_id, plan_id as current_plan,
+	LEAD(plan_id) OVER(partition by customer_id order by start_date) as next_plan
+FROM subscriptions )
+
+SELECT 
+	COUNT(customer_id) as trail_chrun_customers, 
+  ROUND((100*COUNT(customer_id)/(SELECT COUNT(DISTINCT customer_id) FROM subscriptions)),1)::int as percentage
+FROM plan_steps
+WHERE current_plan = 0 and next_plan = 4;
+
+Functions used:
+COUNT to count the no of rows in a column
+DISTINCT to find the unique values in a coulumn
+LEAD window function to extract the leading/next value in the row for the current row.
+Google: a window function that provides access to a row at a specified physical offset which follows the current row.
+				
+Analysis: There are 92 customers who churned straight after the initial free trial which is at 9% of entire customer base.        
+                      ------------------------------------------------------------------------------------
+                      
+                      
+Case 6:    What is the number and percentage of customer plans after their initial free trial?
+
+ We need to find the count of customers  and their percentage of customer who shifted to customers plan 1, 2, 3, 4 after free trail
+ i.e count of customer - count customer with free trail
+
+
+WITH CTE AS (SELECT customer_id, 
+                    plan_id,
+		                LEAD(plan_id) OVER( partition by customer_id order by 				start_date) as next_plan
+                      FROM subscription
+             )
+
+SELECT 
+	next_plan, 
+  COUNT(customer_id) as conversions, 
+  ROUND(100.0* COUNT(customer_id)/(SELECT COUNT(DISTINCT customer_id) FROM subscriptions),2) as Convertion_percentage
+FROM CTE
+WHERE next_plan IS NOT NULL AND plan_id = 0
+GROUP BY 1
+     
+Functions Used: LEAD, COUN, DISTINCT and ROUND
+
+Analysis: More than 80% customers are on paid plans( basic and monthly) and only 3.7% are on pro annual plan. Thus, more strategy need to applied to direct or attract customer who are willing to pay more.
