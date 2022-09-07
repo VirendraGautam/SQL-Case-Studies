@@ -188,3 +188,67 @@ JOIN annual_plan ap
   ON tp.customer_id = ap.customer_id;
   
  Analysis: - 196 customers upgraded to an annual plan in 2020. 
+
+
+						-----------------------------------------------------------------------------
+Case 10: Can you further breakdown this average value into 30 day periods (i.e. 0-30 days, 31-60 days etc)
+
+Here we have to break the count of customers based on interval of 30 days
+
+
+WITH trial_plan AS 
+(SELECT 
+  customer_id, 
+  start_date AS trial_date
+FROM subscriptions
+WHERE plan_id = 0
+),
+-- Filter results to customers at pro annual plan = 3
+annual_plan AS
+(SELECT 
+  customer_id, 
+  start_date AS annual_date
+FROM subscriptions
+WHERE plan_id = 3
+),
+
+bins AS 
+	(SELECT 
+  WIDTH_BUCKET(ap.annual_date - tp.trial_date, 0, 360,12) as average_day_to_upgrade
+FROM trial_plan tp
+JOIN annual_plan ap
+  ON tp.customer_id = ap.customer_id)
+  
+  SELECT 
+  	(average_day_to_upgrade-1)*30 || '-' ||average_day_to_upgrade*30 as break_down, count(*) as customers
+  FROM bins  
+  GROUP BY average_day_to_upgrade
+ ORDER BY average_day_to_upgrade
+ 					
+Function Used:
+	WIDTH_BUCKET(expression, start_value, end_value, bins) are similar to NTILE functions but its use is very different from the NTILE.
+	
+	Width_Bucket is used to bucket values where as NTILE function divides the total row to the number of bins specified.
+	
+						----------------------------------------------------------
+						
+						
+						
+Case 11:  --How many customers downgraded from a pro monthly to a basic monthly plan in 2020?
+ 
+
+ We need to count the customers who has downgraded from pro monthly plan to monthly plan 
+ Year 2020
+ 
+ WITH CTE AS (SELECT
+ 	customer_id, plan_id, start_date,
+    LEAD(plan_id ,1) OVER(PARTITION BY customer_id ORDER BY start_date) as next_plan
+ FROM subscriptions)
+ 
+ SELECT
+ 	COUNT(customer_id) as customers
+ FROM CTE
+ WHERE plan_id = 2 AND next_plan = 1
+ 		AND start_date <= '2020-12-31';						
+
+Analysis: 0 people downgraded from pro monthly plan to montly basic plan in the year 2020.
